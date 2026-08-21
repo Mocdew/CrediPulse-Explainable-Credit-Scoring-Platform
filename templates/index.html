@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrediPulse — AI Credit Scoring & Risk Explainability</title>
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Top Navbar -->
+        <header class="top-navbar">
+            <div class="brand-section">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>Credi<span>Pulse</span></h1>
+                    <p class="subtitle">AI Credit Decisioning & Explainability</p>
+                </div>
+            </div>
+
+            <!-- Global Navigation Tabs -->
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-tab="single-tab">
+                    <i class="fa-solid fa-user-check"></i> Single Assessment
+                </button>
+                <button class="nav-tab" data-tab="batch-tab">
+                    <i class="fa-solid fa-table-list"></i> Batch Processing
+                </button>
+                <button class="nav-tab" data-tab="insights-tab">
+                    <i class="fa-solid fa-chart-pie"></i> Model Intelligence
+                </button>
+            </nav>
+
+            <!-- Top Actions -->
+            <div class="nav-actions">
+                <span class="status-indicator">
+                    <span class="pulse-dot"></span> LightGBM Model Active
+                </span>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+            <!-- ================= TAB 1: SINGLE ASSESSMENT ================= -->
+            <section id="single-tab" class="tab-content active">
+                
+                <!-- Quick Preset Bar -->
+                <div class="preset-banner">
+                    <div class="preset-label">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span>Quick Presets:</span>
+                    </div>
+                    <div class="preset-buttons">
+                        <button type="button" class="preset-btn prime" onclick="loadPreset('prime')">
+                            <i class="fa-solid fa-circle-check"></i> Prime Applicant (Safe)
+                        </button>
+                        <button type="button" class="preset-btn borderline" onclick="loadPreset('borderline')">
+                            <i class="fa-solid fa-circle-half-stroke"></i> Borderline Applicant
+                        </button>
+                        <button type="button" class="preset-btn high-risk" onclick="loadPreset('high_risk')">
+                            <i class="fa-solid fa-triangle-exclamation"></i> High-Risk Applicant
+                        </button>
+                    </div>
+                </div>
+
+                <div class="assessment-grid">
+                    <!-- Left: Interactive Form (20 Features) -->
+                    <div class="form-container card">
+                        <div class="card-header">
+                            <h2><i class="fa-solid fa-sliders"></i> Applicant Attributes</h2>
+                            <button type="button" class="reset-btn" onclick="resetForm()" title="Reset to defaults">
+                                <i class="fa-solid fa-rotate-left"></i> Reset
+                            </button>
+                        </div>
+
+                        <form id="creditForm" onsubmit="handleSingleSubmit(event)">
+                            
+                            <!-- Section 1: Banking & Accounts -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <i class="fa-solid fa-building-columns"></i>
+                                    <span>1. Banking & Account Status</span>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="input-group">
+                                        <label for="checking_status">Checking Account Status <span class="badge-key">Key Driver</span></label>
+                                        <select id="checking_status" name="checking_status" class="form-select" required></select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="savings_status">Savings Account / Bonds</label>
+                                        <select id="savings_status" name="savings_status" class="form-select" required></select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="credit_history">Credit History</label>
+                                        <select id="credit_history" name="credit_history" class="form-select" required></select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="existing_credits">Existing Credits at This Bank</label>
+                                        <input type="number" id="existing_credits" name="existing_credits" class="form-input" min="1" max="4" value="1" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 2: Loan Details -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                                    <span>2. Loan Request Details</span>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="input-group">
+                                        <label for="purpose">Loan Purpose</label>
+                                        <select id="purpose" name="purpose" class="form-select" required></select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="credit_amount">Credit Amount (DM)</label>
+                                        <input type="number" id="credit_amount" name="credit_amount" class="form-input" min="250" max="20000" step="50" value="3000" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="duration_months">Loan Duration (Months)</label>
+                                        <input type="number" id="duration_months" name="duration_months" class="form-input" min="4" max="72" value="24" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="installment_rate">Installment Rate (% of Income)</label>
+                                        <select id="installment_rate" name="installment_rate" class="form-select">
+                                            <option value="1">1% of disposable income</option>
+                                            <option value="2" selected>2% of disposable income</option>
+                                            <option value="3">3% of disposable income</option>
+                                            <option value="4">4% of disposable income</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group full-width">
+                                        <label for="other_installment_plans">Other Installment Plans</label>
+                                        <select id="other_installment_plans" name="other_installment_plans" class="form-select" required></select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 3: Personal & Demographics -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <i class="fa-solid fa-id-card"></i>
+                                    <span>3. Personal Information</span>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="input-group">
+                                        <label for="age">Applicant Age (Years)</label>
+                                        <input type="number" id="age" name="age" class="form-input" min="18" max="80" value="35" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="personal_status_sex">Personal Status & Gender</label>
+                                        <select id="personal_status_sex" name="personal_status_sex" class="form-select" required></select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="num_dependents">Number of Dependents</label>
+                                        <select id="num_dependents" name="num_dependents" class="form-select">
+                                            <option value="1" selected>1 person to maintain</option>
+                                            <option value="2">2 or more persons to maintain</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="foreign_worker">Foreign Worker Status</label>
+                                        <select id="foreign_worker" name="foreign_worker" class="form-select" required></select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 4: Employment & Assets -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <i class="fa-solid fa-briefcase"></i>
+                                    <span>4. Employment & Property Assets</span>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="input-group">
+                                        <label for="employment_since">Present Employment Since</label>
+                                        <select id="employment_since" name="employment_since" class="form-select" required></select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="job">Job Classification</label>
+                                        <select id="job" name="job" class="form-select" required></select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="housing">Housing Status</label>
+                                        <select id="housing" name="housing" class="form-select" required></select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="property">Most Valuable Property</label>
+                                        <select id="property" name="property" class="form-select" required></select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="other_debtors">Other Debtors / Guarantors</label>
+                                        <select id="other_debtors" name="other_debtors" class="form-select" required></select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="residence_since">Present Residence Since</label>
+                                        <select id="residence_since" name="residence_since" class="form-select">
+                                            <option value="1">1 year</option>
+                                            <option value="2" selected>2 years</option>
+                                            <option value="3">3 years</option>
+                                            <option value="4">4+ years</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group full-width">
+                                        <label for="telephone">Telephone Registration</label>
+                                        <select id="telephone" name="telephone" class="form-select" required></select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit button -->
+                            <button type="submit" class="submit-btn" id="evaluateBtn">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Evaluate Credit Risk
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Right: Prediction Results & Explainability -->
+                    <div class="results-container">
+                        
+                        <!-- Decision Banner Card -->
+                        <div class="card result-card" id="decisionCard">
+                            <div class="decision-header">
+                                <div class="decision-badge" id="decisionBadge">
+                                    <i class="fa-solid fa-shield-check"></i>
+                                    <span id="decisionText">Ready to Score</span>
+                                </div>
+                                <div class="tier-tag" id="riskTierTag">Tier --</div>
+                            </div>
+
+                            <div class="metrics-row">
+                                <!-- Default Risk Gauge -->
+                                <div class="metric-box">
+                                    <span class="metric-label">Default Risk Prob P(Bad)</span>
+                                    <div class="metric-value-container">
+                                        <span class="metric-number" id="probBadText">--%</span>
+                                    </div>
+                                    <div class="progress-bar-bg">
+                                        <div class="progress-bar-fill" id="riskProgressBar" style="width: 0%;"></div>
+                                    </div>
+                                    <span class="metric-subtext" id="thresholdComparison">Threshold: 17%</span>
+                                </div>
+
+                                <!-- Credit Score -->
+                                <div class="metric-box">
+                                    <span class="metric-label">Estimated Credit Score</span>
+                                    <div class="metric-value-container">
+                                        <span class="metric-number score-number" id="scoreText">--</span>
+                                        <span class="score-scale">/ 850</span>
+                                    </div>
+                                    <div class="score-range-bar">
+                                        <span class="range-dot" id="scoreDot"></span>
+                                    </div>
+                                    <div class="score-labels">
+                                        <span>300 (Poor)</span>
+                                        <span>580</span>
+                                        <span>670</span>
+                                        <span>850 (Prime)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Decision Threshold Controller -->
+                            <div class="threshold-controller">
+                                <div class="threshold-header">
+                                    <div class="threshold-title">
+                                        <i class="fa-solid fa-sliders"></i>
+                                        <span>Decision Cutoff Threshold:</span>
+                                        <strong id="thresholdValText">0.17 (17%)</strong>
+                                    </div>
+                                    <div class="threshold-hints">
+                                        <button type="button" class="chip-btn active" onclick="setThreshold(0.17)" title="Minimizes 5:1 default cost">
+                                            Cost-Optimal (0.17)
+                                        </button>
+                                        <button type="button" class="chip-btn" onclick="setThreshold(0.50)" title="Standard 50% cutoff">
+                                            Standard (0.50)
+                                        </button>
+                                    </div>
+                                </div>
+                                <input type="range" id="thresholdSlider" min="0.05" max="0.80" step="0.01" value="0.17" class="slider" oninput="onThresholdChange(this.value)">
+                                <p class="threshold-note">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                    <strong>5:1 Cost Asymmetry:</strong> Missed default costs 5x more than a lost customer. Lower threshold (17%) minimizes operational loss.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Adverse Action Reason Codes Card -->
+                        <div class="card explain-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-list-check"></i> Adverse Action Reason Codes</h3>
+                                <span class="compliance-tag"><i class="fa-solid fa-scale-balanced"></i> Fair Lending Compliant</span>
+                            </div>
+                            <p class="section-desc">Key drivers pushing risk <strong>UP</strong> (adverse notices) and positive safety factors:</p>
+                            
+                            <div class="reasons-split">
+                                <div class="reasons-col">
+                                    <h4><i class="fa-solid fa-arrow-trend-up risk-up-icon"></i> Top Elevated Risk Drivers</h4>
+                                    <div id="riskIncreasingList" class="reasons-list">
+                                        <div class="placeholder-text">Submit applicant to see risk drivers</div>
+                                    </div>
+                                </div>
+
+                                <div class="reasons-col">
+                                    <h4><i class="fa-solid fa-arrow-trend-down risk-down-icon"></i> Top Risk Mitigating Factors</h4>
+                                    <div id="riskDecreasingList" class="reasons-list">
+                                        <div class="placeholder-text">Submit applicant to see safe factors</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SHAP Waterfall / Feature Impact Chart -->
+                        <div class="card chart-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-chart-column"></i> Local Feature Impact (Tree SHAP)</h3>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="shapChart"></canvas>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TAB 2: BATCH PROCESSING ================= -->
+            <section id="batch-tab" class="tab-content">
+                <div class="batch-layout">
+                    
+                    <!-- Upload Dropzone Card -->
+                    <div class="card batch-card">
+                        <div class="card-header">
+                            <h2><i class="fa-solid fa-file-csv"></i> Bulk Credit Scoring (CSV)</h2>
+                            <a href="#" class="sample-download-link" onclick="downloadSampleCsv(event)">
+                                <i class="fa-solid fa-download"></i> Download Sample CSV
+                            </a>
+                        </div>
+                        <p class="section-desc">Upload a CSV containing applicant rows. The system will evaluate all rows, compute risk probabilities, and assign decisions.</p>
+
+                        <div class="dropzone" id="csvDropzone" onclick="document.getElementById('csvFileInput').click()">
+                            <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
+                            <div class="dropzone-text">
+                                <span class="dropzone-main">Drag & Drop CSV File here or <u>Browse</u></span>
+                                <span class="dropzone-sub">Supports German Credit format (20 columns)</span>
+                            </div>
+                            <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleFileSelected(this)">
+                        </div>
+
+                        <div id="selectedFileInfo" class="file-info-bar" style="display:none;">
+                            <i class="fa-solid fa-file-lines"></i>
+                            <span id="selectedFileName">filename.csv</span>
+                            <button type="button" class="run-batch-btn" id="runBatchBtn" onclick="submitBatchUpload()">
+                                <i class="fa-solid fa-bolt"></i> Run Batch Scoring
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Batch Results Display -->
+                    <div id="batchResultsSection" style="display:none;">
+                        <!-- Summary KPI Cards -->
+                        <div class="kpi-grid">
+                            <div class="kpi-card">
+                                <span class="kpi-title">Total Applicants</span>
+                                <span class="kpi-val" id="batchTotalCount">0</span>
+                            </div>
+                            <div class="kpi-card approved-kpi">
+                                <span class="kpi-title">Approved (Low Risk)</span>
+                                <span class="kpi-val" id="batchApprovedCount">0</span>
+                                <span class="kpi-sub" id="batchApprovedRate">0% approval rate</span>
+                            </div>
+                            <div class="kpi-card declined-kpi">
+                                <span class="kpi-title">Declined (High Risk)</span>
+                                <span class="kpi-val" id="batchDeclinedCount">0</span>
+                            </div>
+                            <div class="kpi-card">
+                                <span class="kpi-title">Average Default Risk</span>
+                                <span class="kpi-val" id="batchAvgRisk">0%</span>
+                            </div>
+                        </div>
+
+                        <!-- Results Table -->
+                        <div class="card table-card">
+                            <div class="table-header">
+                                <h3><i class="fa-solid fa-table"></i> Scored Applicants Preview (Top 100)</h3>
+                                <button type="button" class="export-btn" onclick="exportBatchCsv()">
+                                    <i class="fa-solid fa-file-export"></i> Download Scored CSV
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="data-table" id="batchTable">
+                                    <thead id="batchTableHead"></thead>
+                                    <tbody id="batchTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ================= TAB 3: MODEL INTELLIGENCE ================= -->
+            <section id="insights-tab" class="tab-content">
+                <div class="insights-grid">
+                    
+                    <!-- Architecture Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fa-solid fa-brain"></i> Model Architecture & Specs</h2>
+                        </div>
+                        <div class="info-list">
+                            <div class="info-item">
+                                <span class="info-label">Algorithm</span>
+                                <span class="info-value">LightGBM Gradient Boosted Classifier</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Hyperparameter Tuning</span>
+                                <span class="info-value">Optuna Bayesian Optimization (25 Trials, 5-Fold Stratified CV)</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Monotonic Constraints</span>
+                                <span class="info-value">Loan Duration (+), Amount (+), Age (-)</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Held-out Test ROC-AUC</span>
+                                <span class="info-value highlight">0.8089 (Top Discriminative Power)</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Separation KS-Statistic</span>
+                                <span class="info-value highlight">0.4895</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Training Dataset</span>
+                                <span class="info-value">Statlog German Credit Data (1,000 cases, 20 attributes)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cost Asymmetry Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fa-solid fa-coins"></i> 5:1 Asymmetric Cost Matrix</h2>
+                        </div>
+                        <p class="section-desc">Standard classifiers assume equal error cost. In retail credit risk, <strong>False Negatives (missed default)</strong> cost approximately 5x more than <strong>False Positives (rejected safe customer)</strong>.</p>
+                        
+                        <div class="cost-table-wrapper">
+                            <table class="cost-matrix-table">
+                                <thead>
+                                    <tr>
+                                        <th>Reality \ Prediction</th>
+                                        <th>Predict Good (Approve)</th>
+                                        <th>Predict Bad (Decline)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Actual Good (Safe)</strong></td>
+                                        <td class="cell-safe">Cost = 0</td>
+                                        <td class="cell-penalty">False Alarm (Cost = 1x)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Actual Bad (Default)</strong></td>
+                                        <td class="cell-critical">Missed Default (Cost = 5x)</td>
+                                        <td class="cell-safe">Cost = 0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="threshold-summary-text">
+                            👉 Operating at <strong>threshold = 0.17</strong> cuts expected bank loss by <strong>41%</strong> compared to the default 0.50 cutoff.
+                        </p>
+                    </div>
+
+                    <!-- Feature Importance Ranking -->
+                    <div class="card full-width">
+                        <div class="card-header">
+                            <h2><i class="fa-solid fa-ranking-star"></i> Global Feature Importance (Information Value & SHAP)</h2>
+                        </div>
+                        <div class="importance-badges">
+                            <span class="imp-badge rank-1">1. checking_status (IV = 0.659)</span>
+                            <span class="imp-badge rank-2">2. credit_history (IV = 0.291)</span>
+                            <span class="imp-badge rank-3">3. duration_months (IV = 0.213)</span>
+                            <span class="imp-badge rank-4">4. savings_status (IV = 0.188)</span>
+                            <span class="imp-badge rank-5">5. purpose (IV = 0.164)</span>
+                            <span class="imp-badge">6. property</span>
+                            <span class="imp-badge">7. credit_amount</span>
+                            <span class="imp-badge">8. employment_since</span>
+                            <span class="imp-badge">9. housing</span>
+                            <span class="imp-badge">10. age</span>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <span>CrediPulse AI Credit Decisioning Platform &copy; 2026</span>
+            <span>Powered by LightGBM &amp; Tree SHAP</span>
+        </footer>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
