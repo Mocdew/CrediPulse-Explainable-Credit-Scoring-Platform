@@ -1,7 +1,9 @@
 // CrediPulse Interactive Frontend Application Logic
 let schema = null;
 let presets = null;
-let currentThreshold = 0.17;
+// null = defer to the exposure-banded policy fitted in the training notebook.
+// A number here is an explicit manual override by the person using the dashboard.
+let currentThreshold = null;
 let shapChart = null;
 let batchDataCsv = null;
 
@@ -115,7 +117,7 @@ async function evaluateCurrentForm() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 applicant: applicant,
-                threshold: currentThreshold
+                threshold: currentThreshold   // null -> server uses the fitted policy
             })
         });
         const result = await res.json();
@@ -151,7 +153,8 @@ function renderResults(data) {
     document.getElementById('probBadText').textContent = data.prob_bad_pct + '%';
     const progressBar = document.getElementById('riskProgressBar');
     progressBar.style.width = Math.min(Math.max(data.prob_bad_pct, 4), 100) + '%';
-    document.getElementById('thresholdComparison').textContent = `Threshold Cutoff: ${(data.threshold_used * 100).toFixed(0)}%`;
+    document.getElementById('thresholdComparison').textContent =
+        `Cutoff ${(data.threshold_used * 100).toFixed(0)}% (${data.threshold_source})`;
 
     // 3. Credit Scorecard Points
     document.getElementById('scoreText').textContent = data.credit_score;
@@ -204,17 +207,22 @@ function renderResults(data) {
 }
 
 // Decision Threshold Handlers
+// 'auto' hands the decision back to the fitted policy, which varies the cutoff by loan
+// size; any number is a manual override applied uniformly.
 function setThreshold(val) {
-    currentThreshold = parseFloat(val);
-    document.getElementById('thresholdSlider').value = val;
-    document.getElementById('thresholdValText').textContent = `${val} (${(val * 100).toFixed(0)}%)`;
-    
+    const isAuto = (val === 'auto');
+    currentThreshold = isAuto ? null : parseFloat(val);
+
+    const slider = document.getElementById('thresholdSlider');
+    if (!isAuto) slider.value = val;
+    document.getElementById('thresholdValText').textContent =
+        isAuto ? 'Policy' : `${val} (${(val * 100).toFixed(0)}%)`;
+
     document.querySelectorAll('.chip-btn').forEach(btn => {
-        if (parseFloat(btn.textContent.match(/[0-9.]+/)[0]) === val) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
+        const match = btn.textContent.match(/[0-9.]+/);
+        const btnIsAuto = (match === null);
+        btn.classList.toggle('active', btnIsAuto ? isAuto
+                                                 : (!isAuto && parseFloat(match[0]) === currentThreshold));
     });
 
     evaluateCurrentForm();
@@ -223,6 +231,10 @@ function setThreshold(val) {
 function onThresholdChange(val) {
     currentThreshold = parseFloat(val);
     document.getElementById('thresholdValText').textContent = `${val} (${(val * 100).toFixed(0)}%)`;
+    document.querySelectorAll('.chip-btn').forEach(btn => {
+        const match = btn.textContent.match(/[0-9.]+/);
+        btn.classList.toggle('active', match !== null && parseFloat(match[0]) === currentThreshold);
+    });
     evaluateCurrentForm();
 }
 
@@ -299,7 +311,7 @@ async function submitBatchUpload() {
 
     const formData = new FormData();
     formData.append('file', fileInput.files[0]);
-    formData.append('threshold', currentThreshold);
+    formData.append('threshold', currentThreshold === null ? 'auto' : currentThreshold);
 
     try {
         const res = await fetch('/api/predict-batch', {
@@ -371,7 +383,7 @@ function exportBatchCsv() {
     const blob = new Blob([batchDataCsv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `scored_applicants_threshold_${currentThreshold}.csv`;
+    link.download = `scored_applicants_${currentThreshold === null ? 'policy' : currentThreshold}.csv`;
     link.click();
 }
 

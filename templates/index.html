@@ -159,19 +159,11 @@
                                         <input type="number" id="age" name="age" class="form-input" min="18" max="80" value="35" required>
                                     </div>
                                     <div class="input-group">
-                                        <label for="personal_status_sex">Personal Status & Gender</label>
-                                        <select id="personal_status_sex" name="personal_status_sex" class="form-select" required></select>
-                                    </div>
-                                    <div class="input-group">
                                         <label for="num_dependents">Number of Dependents</label>
                                         <select id="num_dependents" name="num_dependents" class="form-select">
                                             <option value="1" selected>1 person to maintain</option>
                                             <option value="2">2 or more persons to maintain</option>
                                         </select>
-                                    </div>
-                                    <div class="input-group">
-                                        <label for="foreign_worker">Foreign Worker Status</label>
-                                        <select id="foreign_worker" name="foreign_worker" class="form-select" required></select>
                                     </div>
                                 </div>
                             </div>
@@ -277,21 +269,21 @@
                                     <div class="threshold-title">
                                         <i class="fa-solid fa-sliders"></i>
                                         <span>Decision Cutoff Threshold:</span>
-                                        <strong id="thresholdValText">0.17 (17%)</strong>
+                                        <strong id="thresholdValText">Policy</strong>
                                     </div>
                                     <div class="threshold-hints">
-                                        <button type="button" class="chip-btn active" onclick="setThreshold(0.17)" title="Minimizes 5:1 default cost">
-                                            Cost-Optimal (0.17)
+                                        <button type="button" class="chip-btn active" onclick="setThreshold('auto')" title="Exposure-banded threshold fitted on out-of-fold training predictions">
+                                            Fitted policy
                                         </button>
                                         <button type="button" class="chip-btn" onclick="setThreshold(0.50)" title="Standard 50% cutoff">
                                             Standard (0.50)
                                         </button>
                                     </div>
                                 </div>
-                                <input type="range" id="thresholdSlider" min="0.05" max="0.80" step="0.01" value="0.17" class="slider" oninput="onThresholdChange(this.value)">
+                                <input type="range" id="thresholdSlider" min="0.05" max="0.80" step="0.01" value="0.50" class="slider" oninput="onThresholdChange(this.value)">
                                 <p class="threshold-note">
                                     <i class="fa-solid fa-circle-info"></i>
-                                    <strong>5:1 Cost Asymmetry:</strong> Missed default costs 5x more than a lost customer. Lower threshold (17%) minimizes operational loss.
+                                    <strong>Exposure-weighted policy:</strong> the cutoff is fitted per loan-size band, because the money cost of a wrong decision scales with the amount lent. Moving the slider is a manual override of that policy.
                                 </p>
                             </div>
                         </div>
@@ -452,13 +444,13 @@
                         <div class="card-header">
                             <h2><i class="fa-solid fa-coins"></i> 5:1 Asymmetric Cost Matrix</h2>
                         </div>
-                        <p class="section-desc">Standard classifiers assume equal error cost. In retail credit risk, <strong>False Negatives (missed default)</strong> cost approximately 5x more than <strong>False Positives (rejected safe customer)</strong>.</p>
+                        <p class="section-desc">Standard classifiers assume equal error cost. A flat ratio is not right either: in retail credit the cost of both error types <strong>scales with the amount lent</strong>, so the model optimises expected loss in currency rather than error counts.</p>
                         
                         <div class="cost-table-wrapper">
                             <table class="cost-matrix-table">
                                 <thead>
                                     <tr>
-                                        <th>Reality \ Prediction</th>
+                                        <th>Reality \ Decision</th>
                                         <th>Predict Good (Approve)</th>
                                         <th>Predict Bad (Decline)</th>
                                     </tr>
@@ -467,18 +459,18 @@
                                     <tr>
                                         <td><strong>Actual Good (Safe)</strong></td>
                                         <td class="cell-safe">Cost = 0</td>
-                                        <td class="cell-penalty">False Alarm (Cost = 1x)</td>
+                                        <td class="cell-penalty">Forgone margin = amount &times; margin &times; term</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Actual Bad (Default)</strong></td>
-                                        <td class="cell-critical">Missed Default (Cost = 5x)</td>
+                                        <td class="cell-critical">Loss = amount &times; LGD</td>
                                         <td class="cell-safe">Cost = 0</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                        <p class="threshold-summary-text">
-                            👉 Operating at <strong>threshold = 0.17</strong> cuts expected bank loss by <strong>41%</strong> compared to the default 0.50 cutoff.
+                        <p class="threshold-summary-text" id="policySummary">
+                            Thresholds are fitted per exposure band against this loss function, on out-of-fold training predictions. Loss-given-default and margin are documented assumptions, published with a sensitivity grid in the training notebook.
                         </p>
                     </div>
 
