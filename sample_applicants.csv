@@ -1,8 +1,8 @@
-checking_status,duration_months,credit_history,purpose,credit_amount,savings_status,employment_since,installment_rate,personal_status_sex,other_debtors,residence_since,property,age,other_installment_plans,housing,existing_credits,job,num_dependents,telephone,foreign_worker
-< 0 DM,6,critical account / other credits elsewhere,radio/television,1169,unknown/no savings account,>= 7 years,4,male: single,none,4,real estate,67,none,own,2,skilled employee/official,1,yes, registered,yes
-0-200 DM,48,existing credits paid duly till now,radio/television,5951,< 100 DM,1-4 years,2,female: divorced/separated/married,none,2,real estate,22,none,own,1,skilled employee/official,1,none,yes
-no checking account,12,critical account / other credits elsewhere,education,2096,< 100 DM,4-7 years,2,male: single,none,3,real estate,49,none,own,1,unskilled resident,2,none,yes
-< 0 DM,42,existing credits paid duly till now,furniture/equipment,7882,< 100 DM,4-7 years,2,male: single,guarantor,4,building society savings/life insurance,45,none,for free,1,skilled employee/official,2,none,yes
-< 0 DM,24,delay in paying off in the past,car (new),4870,< 100 DM,1-4 years,3,male: single,none,4,unknown/no property,53,none,for free,2,skilled employee/official,2,none,yes
->= 200 DM,18,existing credits paid duly till now,business,2238,500-1000 DM,1-4 years,2,female: single,none,1,car or other property,32,none,own,1,skilled employee/official,1,none,yes
-no checking account,24,all credits at this bank paid duly,car (used),3000,>= 1000 DM,>= 7 years,3,male: married/widowed,co-applicant,4,real estate,55,bank,own,3,management/self-employed/highly qualified,1,yes, registered,yes
+checking_status,duration_months,credit_history,purpose,credit_amount,savings_status,employment_since,installment_rate,other_debtors,residence_since,property,age,other_installment_plans,housing,existing_credits,job,num_dependents,telephone
+< 0 DM,6,critical account / other credits elsewhere,radio/television,1169,unknown/no savings account,>= 7 years,4,none,4,real estate,67,none,own,2,skilled employee/official,1,"yes, registered"
+0-200 DM,48,existing credits paid duly till now,radio/television,5951,< 100 DM,1-4 years,2,none,2,real estate,22,none,own,1,skilled employee/official,1,none
+no checking account,12,critical account / other credits elsewhere,education,2096,< 100 DM,4-7 years,2,none,3,real estate,49,none,own,1,unskilled resident,2,none
+< 0 DM,42,existing credits paid duly till now,furniture/equipment,7882,< 100 DM,4-7 years,2,guarantor,4,building society savings/life insurance,45,none,for free,1,skilled employee/official,2,none
+< 0 DM,24,delay in paying off in the past,car (new),4870,< 100 DM,1-4 years,3,none,4,unknown/no property,53,none,for free,2,skilled employee/official,2,none
+>= 200 DM,18,existing credits paid duly till now,business,2238,500-1000 DM,1-4 years,2,none,1,car or other property,32,none,own,1,skilled employee/official,1,none
+no checking account,24,all credits at this bank paid duly,car (used),3000,>= 1000 DM,>= 7 years,3,co-applicant,4,real estate,55,bank,own,3,management/self-employed/highly qualified,1,"yes, registered"

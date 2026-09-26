@@ -2,7 +2,9 @@ import os
 import io
 import pandas as pd
 from flask import Flask, render_template, request, jsonify, send_file
-from credit_engine import engine, CATEGORY_MAPS, NUMERIC_FIELDS, FEATURE_ORDER, PRESET_PERSONAS
+from credit_engine import (
+    engine, CATEGORY_MAPS, NUMERIC_FIELDS, FEATURE_ORDER, FEATURE_LABELS, PRESET_PERSONAS,
+)
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload
@@ -16,20 +18,34 @@ def get_schema():
     return jsonify({
         'categories': CATEGORY_MAPS,
         'numeric_fields': NUMERIC_FIELDS,
-        'feature_order': FEATURE_ORDER
+        'feature_order': FEATURE_ORDER,
+        'feature_labels': FEATURE_LABELS,
+        'policy': engine.model_info().get('policy', {}),
     })
 
 @app.route('/api/presets', methods=['GET'])
 def get_presets():
     return jsonify(PRESET_PERSONAS)
 
+def _optional_threshold(raw):
+    """Parse a caller-supplied threshold. None/'' /'auto' means use the fitted policy."""
+    if raw is None or raw == '' or str(raw).lower() == 'auto':
+        return None
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return None
+
+
 @app.route('/api/predict', methods=['POST'])
 def predict():
     try:
         req_data = request.get_json(force=True)
         applicant_data = req_data.get('applicant', {})
-        threshold = float(req_data.get('threshold', 0.17))
-        
+        # No threshold in the payload means "use the fitted policy", which is banded by
+        # exposure. A value here is an explicit manual override by a risk officer.
+        threshold = _optional_threshold(req_data.get('threshold'))
+
         result = engine.predict_single(applicant_data, threshold=threshold)
         return jsonify({'success': True, 'data': result})
     except Exception as e:
@@ -45,7 +61,7 @@ def predict_batch():
         if file.filename == '':
             return jsonify({'success': False, 'error': 'No file selected'}), 400
         
-        threshold = float(request.form.get('threshold', 0.17))
+        threshold = _optional_threshold(request.form.get('threshold'))
         
         # Read CSV
         df = pd.read_csv(file)
@@ -74,20 +90,10 @@ def predict_batch():
 
 @app.route('/api/model-info', methods=['GET'])
 def get_model_info():
-    return jsonify({
-        'model_type': 'LightGBM Classifier (Optuna-Tuned)',
-        'target': 'Credit Risk (0: Good / Approved, 1: Bad / Default)',
-        'dataset': 'Statlog German Credit Dataset (1,000 applicants, 20 features)',
-        'metrics': {
-            'cv_auc': '0.7700 (5-Fold Stratified CV)',
-            'test_auc': '0.8089 (Held-out Test Set)',
-            'ks_statistic': '0.4895',
-            'cost_optimal_threshold': 0.17,
-            'default_threshold': 0.50,
-            'cost_ratio': '5:1 (Missed default penalty vs False rejection)'
-        },
-        'constraints': 'Monotonic constraints enforced on Duration (+), Credit Amount (+), Age (-)'
-    })
+    # Served from the artifact itself rather than hard-coded here, so the documentation
+    # cannot drift away from the model that is actually loaded.
+    return jsonify(engine.model_info())
+
 
 if __name__ == '__main__':
     print("Starting Credit Scoring Frontend on http://127.0.0.1:5000")
